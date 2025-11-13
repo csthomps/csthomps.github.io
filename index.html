@@ -3,91 +3,86 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>csthomps — Personal Site</title>
-		<meta name="description" content="Personal website for csthomps" />
+		<title>Connor Thompson — Personal Site</title>
+		<meta name="description" content="Personal website for Connor Thompson" />
 		<link rel="stylesheet" href="styles.css">
+		<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
 	</head>
 	<body>
-		<header class="site-header">
-			<div class="container header-inner">
-				<a class="brand" href="#">
-					<img src="assets/profile.svg" alt="profile" class="avatar">
-					<div class="brand-text">
-						<h1 class="name">csthomps</h1>
-						<p class="tag">Software, learning, and small experiments.</p>
-					</div>
-				</a>
-				<nav class="nav">
-					<button id="nav-toggle" aria-label="Toggle navigation">☰</button>
-					<ul class="nav-list" id="nav-list">
-						<li><a href="#about">About</a></li>
-						<li><a href="#projects">Projects</a></li>
-						<li><a href="#contact">Contact</a></li>
-					</ul>
-				</nav>
+		<header class="topnav">
+			<div class="topnav-inner">
+				<a class="site-title" href="#">Connor Thompson</a>
+					<nav class="main-nav">
+						<a href="index.html">Home</a>
+						<a href="research.html">Research</a>
+						<a href="teaching.html">Teaching & Talks</a>
+						<a href="awards.html">Awards</a>
+						<a href="assets/CV.pdf" target="_blank" rel="noopener">CV</a>
+					</nav>
 			</div>
 		</header>
 
-		<main>
-			<section class="hero">
-				<div class="container hero-inner">
-					<h2>Hello — I build things on the web.</h2>
-					<p class="lead">I’m the owner of this site. I write code, learn new tools, and share small projects and notes.</p>
-					<div class="hero-actions">
-						<a class="btn" href="#projects">See projects</a>
-						<a class="btn ghost" href="#contact">Get in touch</a>
+		<main class="center-wrap">
+			<div class="main-grid">
+				<aside class="left-col">
+					<img src="assets/profile.jpg" alt="profile" class="avatar">
+					<h2 class="left-name">Connor Thompson</h2>
+					<!-- <p class="person-role">PhD Candidate, Operations Research</p>
+					<p class="person-role small">Vanier Scholar</p>
+					<p class="person-role small">University of Toronto</p> -->
+						<div class="social-links">
+							<a href="assets/CV.pdf" class="icon-link" title="Download CV" target="_blank" rel="noopener">
+								<img src="assets/icons/cv.svg" alt="CV" class="icon">
+							</a>
+							<a href="https://github.com/csthomps" class="icon-link" title="GitHub" target="_blank" rel="noopener">
+								<img src="assets/icons/github.svg" alt="GitHub" class="icon">
+							</a>
+							<a href="https://www.linkedin.com/in/connor-thompson-7b0401212/" class="icon-link" title="LinkedIn" target="_blank" rel="noopener">
+								<img src="assets/icons/linkedin.svg" alt="LinkedIn" class="icon">
+							</a>
+						</div>
+				</aside>
+
+				<section class="right-col">
+					<section id="about" class="section">
+						<h2>About me</h2>
+                        <p>Hi, I'm Connor! I'm a second year master's student studying statistics at BYU, advised by <a class="link" href="https://sandholtz.byu.edu/" target="_blank" rel="noopener">Dr. Nate Sandholtz</a>.</p>
+                        <p>My research has analyzed sports problems through a statistical lense, applying novel inverse optimization methods to understand decision making.  For example, we have explored fourth down decision making in the NFL by assuming that coaches have beliefs about how likely different outcomes are, then estimating those believed probabilities.  Through this lense, we have been able to explain and understand coach decision making in a way no research has ever done before.</p>
+                        <p><strong>I'm currently applying to Ph.D. programs in statistics!</strong></p>
+					</section>
+
+					<div class="two-col">
+						<section id="interests" class="section">
+							<h3>Interests</h3>
+							<ul>
+								<li>Statistical Machine Learning</li>
+								<li>Sports Analytics</li>
+								<li>Causal Inference</li>
+								<li>Answering Questions with Data</li>
+							</ul>
+						</section>
+
+						<section id="education" class="section">
+							<h3>Education</h3>
+							<div class="edu">
+								<h4>MS Statistics, Aug 2024 - Apr 2026</h4>
+								<p class="muted">Brigham Young University</p>
+							</div>
+							<div class="edu">
+								<h4>BS Statistics, Aug 2021 - Apr 2024</h4>
+								<p class="muted">Brigham Young University</p>
+							</div>
+						</section>
 					</div>
-				</div>
-			</section>
 
-			<section id="about" class="section about">
-				<div class="container">
-					<h3>About</h3>
-					<p>I’m an engineer who enjoys building useful things and documenting what I learn. This site is a simple, lightweight personal site built for GitHub Pages. Replace this content with your own bio, photo, and links.</p>
-				</div>
-			</section>
-
-			<section id="projects" class="section projects">
-				<div class="container">
-					<h3>Selected projects</h3>
-					<div class="grid">
-						<article class="card">
-							<h4>Project A</h4>
-							<p>Short description of a project. Link to details or GitHub repo.</p>
-							<p class="muted">Tech: HTML, CSS, JavaScript</p>
-						</article>
-						<article class="card">
-							<h4>Project B</h4>
-							<p>Short description of another project or note.</p>
-							<p class="muted">Tech: Python, Data</p>
-						</article>
-						<article class="card">
-							<h4>Blog / Notes</h4>
-							<p>Short logs, learning notes, and quick experiments.</p>
-							<p class="muted">Tech: Markdown</p>
-						</article>
-					</div>
-				</div>
-			</section>
-
-			<section id="contact" class="section contact">
-				<div class="container">
-					<h3>Contact</h3>
-					<p>If you want to reach out, send an email or open an issue on my GitHub repo.</p>
-					<p>
-						<a class="link" href="mailto:hello@example.com">hello@example.com</a>
-						·
-						<a class="link" href="https://github.com/csthomps" target="_blank" rel="noopener">github.com/csthomps</a>
-					</p>
-				</div>
-			</section>
-		</main>
-
-		<footer class="site-footer">
-			<div class="container footer-inner">
-				<p>© <span id="year"></span> csthomps — Built with simple HTML & CSS.</p>
+					<section id="contact" class="section">
+						<h3>Contact</h3>
+						<!-- <p class="muted">Department of Mechanical and Industrial Engineering, University of Toronto</p> -->
+						<p>Email: <a class="link" href="mailto:csthompsos@gmail.com">csthompsos@gmail.com</a></p>
+					</section>
+				</section>
 			</div>
-		</footer>
+		</main>
 
 		<script src="script.js"></script>
 	</body>
