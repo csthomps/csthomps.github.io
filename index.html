@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>csthomps — Personal Site</title>
+		<meta name="description" content="Personal website for csthomps" />
+		<link rel="stylesheet" href="styles.css">
+	</head>
+	<body>
+		<header class="site-header">
+			<div class="container header-inner">
+				<a class="brand" href="#">
+					<img src="assets/profile.svg" alt="profile" class="avatar">
+					<div class="brand-text">
+						<h1 class="name">csthomps</h1>
+						<p class="tag">Software, learning, and small experiments.</p>
+					</div>
+				</a>
+				<nav class="nav">
+					<button id="nav-toggle" aria-label="Toggle navigation">☰</button>
+					<ul class="nav-list" id="nav-list">
+						<li><a href="#about">About</a></li>
+						<li><a href="#projects">Projects</a></li>
+						<li><a href="#contact">Contact</a></li>
+					</ul>
+				</nav>
+			</div>
+		</header>
+
+		<main>
+			<section class="hero">
+				<div class="container hero-inner">
+					<h2>Hello — I build things on the web.</h2>
+					<p class="lead">I’m the owner of this site. I write code, learn new tools, and share small projects and notes.</p>
+					<div class="hero-actions">
+						<a class="btn" href="#projects">See projects</a>
+						<a class="btn ghost" href="#contact">Get in touch</a>
+					</div>
+				</div>
+			</section>
+
+			<section id="about" class="section about">
+				<div class="container">
+					<h3>About</h3>
+					<p>I’m an engineer who enjoys building useful things and documenting what I learn. This site is a simple, lightweight personal site built for GitHub Pages. Replace this content with your own bio, photo, and links.</p>
+				</div>
+			</section>
+
+			<section id="projects" class="section projects">
+				<div class="container">
+					<h3>Selected projects</h3>
+					<div class="grid">
+						<article class="card">
+							<h4>Project A</h4>
+							<p>Short description of a project. Link to details or GitHub repo.</p>
+							<p class="muted">Tech: HTML, CSS, JavaScript</p>
+						</article>
+						<article class="card">
+							<h4>Project B</h4>
+							<p>Short description of another project or note.</p>
+							<p class="muted">Tech: Python, Data</p>
+						</article>
+						<article class="card">
+							<h4>Blog / Notes</h4>
+							<p>Short logs, learning notes, and quick experiments.</p>
+							<p class="muted">Tech: Markdown</p>
+						</article>
+					</div>
+				</div>
+			</section>
+
+			<section id="contact" class="section contact">
+				<div class="container">
+					<h3>Contact</h3>
+					<p>If you want to reach out, send an email or open an issue on my GitHub repo.</p>
+					<p>
+						<a class="link" href="mailto:hello@example.com">hello@example.com</a>
+						·
+						<a class="link" href="https://github.com/csthomps" target="_blank" rel="noopener">github.com/csthomps</a>
+					</p>
+				</div>
+			</section>
+		</main>
+
+		<footer class="site-footer">
+			<div class="container footer-inner">
+				<p>© <span id="year"></span> csthomps — Built with simple HTML & CSS.</p>
+			</div>
+		</footer>
+
+		<script src="script.js"></script>
+	</body>
+</html>
