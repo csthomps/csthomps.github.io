@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Memory & Learning — Redirecting</title>
+    <!--
+      Behavior:
+      - By default this page redirects immediately to the local PDF `Memory_Learning.pdf`.
+      - To have the same link redirect to the paper's arXiv page instead, create a file
+        `assets/memory_link_target.txt` containing the full arXiv URL (single line).
+      - The script below will fetch that file (no-cache). If present and non-empty it redirects
+        to that URL. Otherwise it opens the local PDF.
+    -->
+    <meta http-equiv="refresh" content="0;url=./Memory_Learning.pdf">
+    <script>
+      (async function(){
+        try{
+          const resp = await fetch('./memory_link_target.txt', {cache: 'no-store'});
+          if(resp && resp.ok){
+            const url = (await resp.text()).trim();
+            if(url){
+              // Prefer the configured URL (e.g., an arXiv link)
+              window.location.replace(url);
+              return;
+            }
+          }
+        }catch(e){
+          // swallow errors and fall back to local PDF
+        }
+        // fallback: navigate to the local PDF
+        window.location.replace('./Memory_Learning.pdf');
+      })();
+    </script>
+  </head>
+  <body>
+    <p>Redirecting to the paper. If you are not redirected, <a href="./Memory_Learning.pdf">open the PDF</a>.</p>
+  </body>
+</html>
