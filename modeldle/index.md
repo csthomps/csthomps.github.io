@@ -21,6 +21,8 @@ A daily Wordle-like guessing game for machine learning models!
 
 **New model every day** - The daily target is selected using the date as a seed, so everyone plays the same model each day.
 
+**Too hard for you?** Activate easy mode to filter based on the information you've discovered.
+
 <center>
   <a href="game.html" style="display: inline-block; background: #667eea; color: white; padding: 15px 40px; border-radius: 8px; text-decoration: none; font-size: 1.2em; font-weight: bold;">🎮 Play Now!</a>
 </center>

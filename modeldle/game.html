@@ -17,7 +17,9 @@
             min-height: 100vh;
             padding: 20px;
         }
-
+        .partial-match {
+            background: #c9b458; /* Wordle yellow */
+        }
         .container {
             max-width: 1000px;
             margin: 0 auto;
@@ -109,7 +111,40 @@
         .guesses-container {
             margin-top: 20px;
         }
+        .guess-row {
+            display: grid;
+            grid-template-columns: 250px repeat(4, 1fr);
+            gap: 4px;
+            margin-bottom: 6px;
+        }
 
+        .guess-tile {
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .guess-model {
+            background: #444;
+        }
+
+        .match {
+            background: #6aaa64;
+        }
+
+        .partial-match {
+            background: #c9b458;
+        }
+
+        .no-match {
+            background: #787c7e;
+        }
         .guess {
             background: #f9f9f9;
             border-left: 4px solid #ddd;
@@ -324,7 +359,11 @@
             transition: 0.3s;
             border-radius: 50%;
         }
-
+        .header-row .guess-tile {
+            background: #222;
+            color: white;
+            font-size: 0.85rem;
+        }
         input:checked + .toggle-slider {
             background-color: #667eea;
         }
@@ -367,8 +406,15 @@
 
             <div class="info-text">
                 🎯 Guess a model and see how many attributes match the daily target!
+                Red means wrong, yellow means partially right or close, and green means a perfect match. For date attributes, arrows indicate if the target is older (↓) or newer (↑) than your guess.
             </div>
-
+            <div class="guess-row header-row">
+                <div class="guess-tile guess-model">Model</div>
+                <div class="guess-tile">Learning Type</div>
+                <div class="guess-tile">Tasks</div>
+                <div class="guess-tile">Interpretability</div>
+                <div class="guess-tile">Year</div>
+            </div>
             <div id="guessesContainer" class="guesses-container"></div>
 
             <div id="winMessage"></div>
@@ -433,7 +479,7 @@
                 // Select today's model using date-based seeding
                 const seed = getDailySeed();
                 const randomIndex = Math.floor(seededRandom(seed) * models.length);
-                todayModel = models[randomIndex];
+                todayModel = models[39];
 
                 updateUI();
                 loadSavedGame();
@@ -470,74 +516,121 @@
             document.getElementById('guessesCount').textContent = 
                 guesses.length > 0 ? `You've made ${guesses.length} guess${guesses.length !== 1 ? 'es' : ''}` : '';
         }
+        function compareTasks(guessTasks, targetTasks) {
+            const guess = guessTasks
+                .split(';')
+                .map(t => t.trim())
+                .filter(Boolean);
 
+            const target = targetTasks
+                .split(';')
+                .map(t => t.trim())
+                .filter(Boolean);
+
+            const overlap = guess.filter(t => target.includes(t));
+
+            if (overlap.length === 0) {
+                return 'no-match';
+            }
+
+            if (
+                overlap.length === guess.length &&
+                overlap.length === target.length
+            ) {
+                return 'match';
+            }
+
+            return 'partial-match';
+        }
+
+        function compareDate(guessDateStr, targetDateStr) {
+            const guessDate = parseDate(guessDateStr);
+            const targetDate = parseDate(targetDateStr);
+
+            if (!guessDate || !targetDate) {
+                return {
+                    className: 'no-match',
+                    display: guessDateStr
+                };
+            }
+
+            const diffYears =
+                Math.abs(targetDate.getFullYear() - guessDate.getFullYear());
+
+            let className;
+
+            if (diffYears === 0) {
+                className = 'match';
+            } else if (diffYears <= 10) {
+                className = 'partial-match';
+            } else {
+                className = 'no-match';
+            }
+
+            const arrow =
+                guessDate < targetDate ? ' ↑' :
+                guessDate > targetDate ? ' ↓' :
+                '';
+
+            return {
+                className,
+                display: guessDate.getFullYear() + arrow
+            };
+        }
         function createGuessElement(guessedModel) {
-            const div = document.createElement('div');
-            div.className = 'guess ' + (guessedModel.ModelName === todayModel.ModelName ? 'correct' : '');
+            const row = document.createElement('div');
+            row.className = 'guess-row';
 
-            const title = document.createElement('div');
-            title.className = 'guess-title';
-            title.textContent = guessedModel.ModelName;
-            div.appendChild(title);
+            const modelTile = document.createElement('div');
+            modelTile.className =
+                'guess-tile guess-model' +
+                (guessedModel.ModelName === todayModel.ModelName
+                    ? ' match'
+                    : '');
 
-            // Display configured attributes
-            const attrRow = document.createElement('div');
-            attrRow.className = 'attribute-row';
+            modelTile.textContent = guessedModel.ModelName;
+
+            row.appendChild(modelTile);
 
             GAME_ATTRIBUTES.forEach(attr => {
-                const attrDiv = document.createElement('div');
-                attrDiv.className = 'attribute';
+                const tile = document.createElement('div');
+                tile.className = 'guess-tile';
 
                 const guessValue = guessedModel[attr.key];
                 const targetValue = todayModel[attr.key];
-                const isMatch = guessValue === targetValue;
-                const isDateAttr = attr.key === 'DateIntroduced';
 
-                const indicator = document.createElement('div');
-                indicator.className = 'attribute-indicator';
-
-                if (isDateAttr && !isMatch) {
-                    // Parse dates for comparison
-                    const guessDate = parseDate(guessValue);
-                    const targetDate = parseDate(targetValue);
-                    
-                    if (guessDate && targetDate) {
-                        if (guessDate < targetDate) {
-                            indicator.className += ' no-match';
-                            indicator.textContent = '↓'; // Older
-                            attrDiv.className += ' date-comparison';
-                        } else if (guessDate > targetDate) {
-                            indicator.className += ' no-match';
-                            indicator.textContent = '↑'; // Newer
-                            attrDiv.className += ' date-comparison';
-                        }
-                    } else {
-                        indicator.className += ' no-match';
-                        indicator.textContent = '✗';
-                    }
-                } else {
-                    indicator.className += (isMatch ? 'match' : 'no-match');
-                    indicator.textContent = isMatch ? '✓' : '✗';
+                if (attr.key === 'Tasks') {
+                    tile.classList.add(
+                        compareTasks(guessValue, targetValue)
+                    );
+                    tile.textContent = guessValue;
                 }
 
-                const label = document.createElement('span');
-                label.className = 'attribute-label';
-                label.textContent = attr.label + ':';
+                else if (attr.key === 'DateIntroduced') {
+                    const result = compareDate(
+                        guessValue,
+                        targetValue
+                    );
 
-                const value = document.createElement('span');
-                value.className = 'attribute-value';
-                value.textContent = guessValue;
+                    tile.classList.add(result.className);
+                    tile.textContent = result.display;
+                }
 
-                attrDiv.appendChild(indicator);
-                attrDiv.appendChild(label);
-                attrDiv.appendChild(value);
-                attrRow.appendChild(attrDiv);
+                else {
+                    tile.classList.add(
+                        guessValue === targetValue
+                            ? 'match'
+                            : 'no-match'
+                    );
+
+                    tile.textContent = guessValue;
+                }
+
+                row.appendChild(tile);
             });
 
-            div.appendChild(attrRow);
-            return div;
+            return row;
         }
-
         function parseDate(dateStr) {
             // Parse date strings like "2023", "2023-06", "2023-06-15", or "June 2023"
             if (!dateStr) return null;
@@ -582,6 +675,7 @@
                 const isCorrect = guess.ModelName === todayModel.ModelName;
                 text += `${guess.ModelName}\n`;
 
+                let indicators = [];
                 GAME_ATTRIBUTES.forEach(attr => {
                     const guessValue = guess[attr.key];
                     const targetValue = todayModel[attr.key];
@@ -594,9 +688,9 @@
                         const targetDate = parseDate(targetValue);
                         if (guessDate && targetDate) {
                             if (guessDate < targetDate) {
-                                indicator = '↓';
+                                indicator = '↑'; // Target is more recent
                             } else if (guessDate > targetDate) {
-                                indicator = '↑';
+                                indicator = '↓'; // Target is older
                             } else {
                                 indicator = '✓';
                             }
@@ -607,9 +701,10 @@
                         indicator = isMatch ? '✓' : '✗';
                     }
 
-                    text += `  ${indicator}\n`;
+                    indicators.push(indicator);
                 });
 
+                text += `  ${indicators.join(' ')}\n`;
                 text += '\n';
             });
 
@@ -644,28 +739,85 @@
         function getSolvedAttributes() {
             // Get attributes that have been correctly matched in previous guesses
             const solved = {};
+            const incorrect = {}; // Track incorrect attributes to eliminate
+            const dateConstraints = {}; // Track date constraints
             
             guesses.forEach(guess => {
                 if (guess.ModelName !== todayModel.ModelName) {
-                    // Only consider non-winning guesses to find correct matches
+                    // Only consider non-winning guesses
                     GAME_ATTRIBUTES.forEach(attr => {
-                        if (guess[attr.key] === todayModel[attr.key]) {
-                            solved[attr.key] = todayModel[attr.key];
+                        const guessValue = guess[attr.key];
+                        const targetValue = todayModel[attr.key];
+                        const isDateAttr = attr.key === 'DateIntroduced';
+                        
+                        if (guessValue === targetValue) {
+                            // Correct match
+                            solved[attr.key] = targetValue;
+                        } else if (isDateAttr) {
+                            // Track date constraints
+                            const guessDate = parseDate(guessValue);
+                            const targetDate = parseDate(targetValue);
+                            if (guessDate && targetDate) {
+                                if (!dateConstraints[attr.key]) {
+                                    dateConstraints[attr.key] = { min: null, max: null };
+                                }
+                                if (guessDate < targetDate) {
+                                    // Target is more recent, so all models must have date > guessDate
+                                    if (!dateConstraints[attr.key].min || guessDate > dateConstraints[attr.key].min) {
+                                        dateConstraints[attr.key].min = guessDate;
+                                    }
+                                } else if (guessDate > targetDate) {
+                                    // Target is older, so all models must have date < guessDate
+                                    if (!dateConstraints[attr.key].max || guessDate < dateConstraints[attr.key].max) {
+                                        dateConstraints[attr.key].max = guessDate;
+                                    }
+                                }
+                            }
+                        } else {
+                            // Incorrect match - eliminate models with this value
+                            if (!incorrect[attr.key]) {
+                                incorrect[attr.key] = [];
+                            }
+                            if (!incorrect[attr.key].includes(guessValue)) {
+                                incorrect[attr.key].push(guessValue);
+                            }
                         }
                     });
                 }
             });
             
-            return solved;
+            return { solved, incorrect, dateConstraints };
         }
 
         function modelMatchesSolvedAttributes(model) {
-            // Check if model matches all the solved attributes
-            const solved = getSolvedAttributes();
+            // Check if model matches all constraints from previous guesses
+            const constraints = getSolvedAttributes();
+            const { solved, incorrect, dateConstraints } = constraints;
             
+            // Check correct attributes
             for (const [key, value] of Object.entries(solved)) {
                 if (model[key] !== value) {
                     return false;
+                }
+            }
+            
+            // Check incorrect attributes (eliminate models with these wrong values)
+            for (const [key, values] of Object.entries(incorrect)) {
+                if (values.includes(model[key])) {
+                    return false;
+                }
+            }
+            
+            // Check date constraints
+            for (const [key, constraint] of Object.entries(dateConstraints)) {
+                const modelDate = parseDate(model[key]);
+                if (modelDate) {
+                    if (constraint.min && modelDate <= constraint.min) {
+                        return false;
+                    }
+                    if (constraint.max && modelDate >= constraint.max) {
+                        return false;
+                    }
                 }
             }
             
@@ -700,7 +852,7 @@
                 m.ShortName.toLowerCase().includes(query)
             );
 
-            filtered = getFilteredModels(filtered).slice(0, 15);
+            filtered = getFilteredModels(filtered);
 
             if (filtered.length === 0) {
                 suggestionsDiv.classList.remove('show');
@@ -719,7 +871,7 @@
             if (models.length === 0) return;
 
             let filtered = models.slice();
-            filtered = getFilteredModels(filtered).slice(0, 15);
+            filtered = getFilteredModels(filtered);
 
             suggestionsDiv.innerHTML = filtered.map(m => 
                 `<div class="suggestion-item" data-model="${m.ModelName}">${m.ModelName}</div>`
