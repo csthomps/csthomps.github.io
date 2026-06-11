@@ -227,6 +227,111 @@
             display: block;
             margin: 20px auto 0;
         }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .share-button {
+            background: #28a745;
+        }
+
+        .share-button:hover {
+            background: #218838;
+        }
+
+        .attribute.date-comparison .attribute-indicator {
+            font-size: 1.2em;
+        }
+
+        .copy-feedback {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            background: #f0f0f0;
+            padding: 12px 15px;
+            border-radius: 8px;
+            width: fit-content;
+        }
+
+        .toggle-label {
+            font-size: 0.95em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #667eea;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
     </style>
 </head>
 <body>
@@ -239,6 +344,14 @@
         <div class="game-info">
             <div class="daily-model-hint">
                 <strong>Today's Model:</strong> <span id="dailyInfo">Loading...</span>
+            </div>
+
+            <div class="toggle-container">
+                <label class="toggle-label">Easy Mode (Filter Guesses)</label>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="easyModeToggle">
+                    <span class="toggle-slider"></span>
+                </label>
             </div>
 
             <div class="search-container">
@@ -261,7 +374,10 @@
             <div id="winMessage"></div>
             <div class="guesses-count" id="guessesCount"></div>
 
-            <button class="reset-button" id="resetButton">🔄 New Game (Reset)</button>
+            <div class="button-row">
+                <button class="share-button" id="shareButton" style="display: none;">📋 Share Results</button>
+                <button class="reset-button" id="resetButton">🔄 New Game (Reset)</button>
+            </div>
         </div>
     </div>
 
@@ -295,6 +411,7 @@
         let todayModel = null;
         let guesses = [];
         let hasWon = false;
+        let easyMode = false;
 
         // Parse CSV data
         async function loadModels() {
@@ -338,6 +455,9 @@
                 container.appendChild(guessEl);
             });
 
+            // Show/hide share button
+            document.getElementById('shareButton').style.display = guesses.length > 0 ? 'block' : 'none';
+
             if (hasWon) {
                 const winDiv = document.getElementById('winMessage');
                 winDiv.innerHTML = `
@@ -371,10 +491,34 @@
                 const guessValue = guessedModel[attr.key];
                 const targetValue = todayModel[attr.key];
                 const isMatch = guessValue === targetValue;
+                const isDateAttr = attr.key === 'DateIntroduced';
 
                 const indicator = document.createElement('div');
-                indicator.className = 'attribute-indicator ' + (isMatch ? 'match' : 'no-match');
-                indicator.textContent = isMatch ? '✓' : '✗';
+                indicator.className = 'attribute-indicator';
+
+                if (isDateAttr && !isMatch) {
+                    // Parse dates for comparison
+                    const guessDate = parseDate(guessValue);
+                    const targetDate = parseDate(targetValue);
+                    
+                    if (guessDate && targetDate) {
+                        if (guessDate < targetDate) {
+                            indicator.className += ' no-match';
+                            indicator.textContent = '↓'; // Older
+                            attrDiv.className += ' date-comparison';
+                        } else if (guessDate > targetDate) {
+                            indicator.className += ' no-match';
+                            indicator.textContent = '↑'; // Newer
+                            attrDiv.className += ' date-comparison';
+                        }
+                    } else {
+                        indicator.className += ' no-match';
+                        indicator.textContent = '✗';
+                    }
+                } else {
+                    indicator.className += (isMatch ? 'match' : 'no-match');
+                    indicator.textContent = isMatch ? '✓' : '✗';
+                }
 
                 const label = document.createElement('span');
                 label.className = 'attribute-label';
@@ -394,20 +538,169 @@
             return div;
         }
 
+        function parseDate(dateStr) {
+            // Parse date strings like "2023", "2023-06", "2023-06-15", or "June 2023"
+            if (!dateStr) return null;
+            
+            dateStr = dateStr.trim();
+            
+            // Try YYYY format
+            if (/^\d{4}$/.test(dateStr)) {
+                return new Date(parseInt(dateStr), 0, 1);
+            }
+            
+            // Try YYYY-MM format
+            if (/^\d{4}-\d{2}$/.test(dateStr)) {
+                const [year, month] = dateStr.split('-').map(Number);
+                return new Date(year, month - 1, 1);
+            }
+            
+            // Try YYYY-MM-DD format
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                return new Date(dateStr);
+            }
+            
+            // Try to parse as a date string like "June 2023"
+            const parsed = new Date(dateStr);
+            if (!isNaN(parsed.getTime())) {
+                return parsed;
+            }
+            
+            return null;
+        }
+
+        function generateShareText() {
+            const today = new Date();
+            const dateStr = today.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            
+            let text = `🤖 Modeldle - ${dateStr}\n`;
+            text += `${guesses.length} Guess${guesses.length !== 1 ? 'es' : ''}\n`;
+            text += hasWon ? '✨ Solved!\n' : 'In Progress...\n';
+            text += '\n';
+
+            guesses.forEach(guess => {
+                const isCorrect = guess.ModelName === todayModel.ModelName;
+                text += `${guess.ModelName}\n`;
+
+                GAME_ATTRIBUTES.forEach(attr => {
+                    const guessValue = guess[attr.key];
+                    const targetValue = todayModel[attr.key];
+                    const isMatch = guessValue === targetValue;
+                    const isDateAttr = attr.key === 'DateIntroduced';
+
+                    let indicator = '';
+                    if (isDateAttr && !isMatch) {
+                        const guessDate = parseDate(guessValue);
+                        const targetDate = parseDate(targetValue);
+                        if (guessDate && targetDate) {
+                            if (guessDate < targetDate) {
+                                indicator = '↓';
+                            } else if (guessDate > targetDate) {
+                                indicator = '↑';
+                            } else {
+                                indicator = '✓';
+                            }
+                        } else {
+                            indicator = '✗';
+                        }
+                    } else {
+                        indicator = isMatch ? '✓' : '✗';
+                    }
+
+                    text += `  ${indicator}\n`;
+                });
+
+                text += '\n';
+            });
+
+            text += '🔗 Play at: csthomps.github.io/modeldle/game.html';
+            return text;
+        }
+
+        document.getElementById('shareButton').addEventListener('click', function() {
+            const shareText = generateShareText();
+            
+            // Copy to clipboard
+            navigator.clipboard.writeText(shareText).then(() => {
+                // Show feedback
+                const feedback = document.createElement('div');
+                feedback.className = 'copy-feedback';
+                feedback.textContent = '✓ Copied to clipboard!';
+                document.body.appendChild(feedback);
+
+                setTimeout(() => {
+                    feedback.remove();
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy to clipboard');
+            });
+        });
+
         // Search and autocomplete
-        document.getElementById('modelSearch').addEventListener('input', function() {
+        const modelSearch = document.getElementById('modelSearch');
+        const suggestionsDiv = document.getElementById('suggestions');
+
+        function getSolvedAttributes() {
+            // Get attributes that have been correctly matched in previous guesses
+            const solved = {};
+            
+            guesses.forEach(guess => {
+                if (guess.ModelName !== todayModel.ModelName) {
+                    // Only consider non-winning guesses to find correct matches
+                    GAME_ATTRIBUTES.forEach(attr => {
+                        if (guess[attr.key] === todayModel[attr.key]) {
+                            solved[attr.key] = todayModel[attr.key];
+                        }
+                    });
+                }
+            });
+            
+            return solved;
+        }
+
+        function modelMatchesSolvedAttributes(model) {
+            // Check if model matches all the solved attributes
+            const solved = getSolvedAttributes();
+            
+            for (const [key, value] of Object.entries(solved)) {
+                if (model[key] !== value) {
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+
+        function getFilteredModels(baseModels) {
+            if (!easyMode) {
+                return baseModels;
+            }
+            
+            return baseModels.filter(m => modelMatchesSolvedAttributes(m));
+        }
+
+        modelSearch.addEventListener('focus', function() {
+            // Show all models when field is focused
+            if (models.length > 0 && this.value.length === 0) {
+                showAllSuggestions();
+            }
+        });
+
+        modelSearch.addEventListener('input', function() {
             const query = this.value.toLowerCase();
-            const suggestionsDiv = document.getElementById('suggestions');
 
             if (query.length === 0) {
-                suggestionsDiv.classList.remove('show');
+                showAllSuggestions();
                 return;
             }
 
-            const filtered = models.filter(m => 
+            let filtered = models.filter(m => 
                 m.ModelName.toLowerCase().includes(query) ||
                 m.ShortName.toLowerCase().includes(query)
-            ).slice(0, 8);
+            );
+
+            filtered = getFilteredModels(filtered).slice(0, 15);
 
             if (filtered.length === 0) {
                 suggestionsDiv.classList.remove('show');
@@ -419,13 +712,30 @@
             ).join('');
 
             suggestionsDiv.classList.add('show');
+            attachSuggestionListeners();
+        });
 
+        function showAllSuggestions() {
+            if (models.length === 0) return;
+
+            let filtered = models.slice();
+            filtered = getFilteredModels(filtered).slice(0, 15);
+
+            suggestionsDiv.innerHTML = filtered.map(m => 
+                `<div class="suggestion-item" data-model="${m.ModelName}">${m.ModelName}</div>`
+            ).join('');
+
+            suggestionsDiv.classList.add('show');
+            attachSuggestionListeners();
+        }
+
+        function attachSuggestionListeners() {
             document.querySelectorAll('.suggestion-item').forEach(item => {
                 item.addEventListener('click', function() {
                     selectModel(this.dataset.model);
                 });
             });
-        });
+        }
 
         function selectModel(modelName) {
             const model = models.find(m => m.ModelName === modelName);
@@ -480,13 +790,21 @@
 
         document.getElementById('resetButton').addEventListener('click', resetGame);
 
+        document.getElementById('easyModeToggle').addEventListener('change', function() {
+            easyMode = this.checked;
+            // Refresh the suggestions with new filtering
+            if (modelSearch.value.length === 0 && suggestionsDiv.classList.contains('show')) {
+                showAllSuggestions();
+            }
+        });
+
         // Load models on page load
         loadModels();
 
         // Close suggestions when clicking outside
         document.addEventListener('click', function(e) {
-            if (e.target.id !== 'modelSearch') {
-                document.getElementById('suggestions').classList.remove('show');
+            if (e.target.id !== 'modelSearch' && !e.target.closest('.search-container')) {
+                suggestionsDiv.classList.remove('show');
             }
         });
     </script>
