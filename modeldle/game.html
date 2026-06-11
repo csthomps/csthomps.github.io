@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modeldle - Daily ML Model Guessing Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 5px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .game-info {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .daily-model-hint {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 1em;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #667eea;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            z-index: 10;
+        }
+
+        .suggestions.show {
+            display: block;
+        }
+
+        .suggestion-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+        }
+
+        .suggestion-item:hover {
+            background: #f0f0f0;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .guesses-container {
+            margin-top: 20px;
+        }
+
+        .guess {
+            background: #f9f9f9;
+            border-left: 4px solid #ddd;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 5px;
+            font-size: 0.95em;
+        }
+
+        .guess.correct {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+
+        .guess-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 1.05em;
+        }
+
+        .attribute-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .attribute {
+            display: flex;
+            align-items: center;
+            font-size: 0.9em;
+        }
+
+        .attribute-indicator {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 8px;
+            flex-shrink: 0;
+            font-weight: bold;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+        }
+
+        .match {
+            background: #28a745;
+        }
+
+        .no-match {
+            background: #dc3545;
+        }
+
+        .attribute-label {
+            font-weight: 600;
+            color: #333;
+            min-width: 130px;
+        }
+
+        .attribute-value {
+            color: #555;
+        }
+
+        .win-message {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .guesses-count {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .info-text {
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.95em;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #764ba2;
+        }
+
+        .reset-button {
+            display: block;
+            margin: 20px auto 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 Modeldle</h1>
+            <p>Guess the daily ML model!</p>
+        </header>
+
+        <div class="game-info">
+            <div class="daily-model-hint">
+                <strong>Today's Model:</strong> <span id="dailyInfo">Loading...</span>
+            </div>
+
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    id="modelSearch" 
+                    placeholder="Search and select a model..."
+                    autocomplete="off"
+                >
+                <div class="suggestions" id="suggestions"></div>
+            </div>
+
+            <div class="info-text">
+                🎯 Guess a model and see how many attributes match the daily target!
+            </div>
+
+            <div id="guessesContainer" class="guesses-container"></div>
+
+            <div id="winMessage"></div>
+            <div class="guesses-count" id="guessesCount"></div>
+
+            <button class="reset-button" id="resetButton">🔄 New Game (Reset)</button>
+        </div>
+    </div>
+
+    <script>
+        // ========== CONFIGURATION: Select which attributes to display ==========
+        const GAME_ATTRIBUTES = [
+            { label: 'Learning Type', key: 'LearningType' },
+            { label: 'Tasks', key: 'Tasks' },
+            { label: 'Interpretability', key: 'Interpretability' },
+            { label: 'Date Introduced', key: 'DateIntroduced' }
+        ];
+        // ========================================================================
+
+        // Seeded random number generator
+        function seededRandom(seed) {
+            const x = Math.sin(seed) * 10000;
+            return x - Math.floor(x);
+        }
+
+        // Get today's date as seed
+        function getDailySeed() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const dateString = `${year}${month}${day}`;
+            return parseInt(dateString);
+        }
+
+        let models = [];
+        let todayModel = null;
+        let guesses = [];
+        let hasWon = false;
+
+        // Parse CSV data
+        async function loadModels() {
+            try {
+                const response = await fetch('models.csv');
+                const csv = await response.text();
+                const lines = csv.trim().split('\n');
+                const headers = lines[0].split(',');
+
+                models = lines.slice(1).map(line => {
+                    const values = line.split(',');
+                    const model = {};
+                    headers.forEach((header, index) => {
+                        model[header.trim()] = values[index]?.trim() || '';
+                    });
+                    return model;
+                });
+
+                // Select today's model using date-based seeding
+                const seed = getDailySeed();
+                const randomIndex = Math.floor(seededRandom(seed) * models.length);
+                todayModel = models[randomIndex];
+
+                updateUI();
+                loadSavedGame();
+            } catch (error) {
+                console.error('Error loading models:', error);
+                document.querySelector('.loading').textContent = 'Error loading game data';
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('dailyInfo').textContent = 
+                `You have ${guesses.length} guess${guesses.length !== 1 ? 'es' : ''} so far`;
+
+            const container = document.getElementById('guessesContainer');
+            container.innerHTML = '';
+
+            guesses.forEach(guess => {
+                const guessEl = createGuessElement(guess);
+                container.appendChild(guessEl);
+            });
+
+            if (hasWon) {
+                const winDiv = document.getElementById('winMessage');
+                winDiv.innerHTML = `
+                    <div class="win-message">
+                        ✨ You got it! The model was <strong>${todayModel.ModelName}</strong>!
+                    </div>
+                `;
+            }
+
+            document.getElementById('guessesCount').textContent = 
+                guesses.length > 0 ? `You've made ${guesses.length} guess${guesses.length !== 1 ? 'es' : ''}` : '';
+        }
+
+        function createGuessElement(guessedModel) {
+            const div = document.createElement('div');
+            div.className = 'guess ' + (guessedModel.ModelName === todayModel.ModelName ? 'correct' : '');
+
+            const title = document.createElement('div');
+            title.className = 'guess-title';
+            title.textContent = guessedModel.ModelName;
+            div.appendChild(title);
+
+            // Display configured attributes
+            const attrRow = document.createElement('div');
+            attrRow.className = 'attribute-row';
+
+            GAME_ATTRIBUTES.forEach(attr => {
+                const attrDiv = document.createElement('div');
+                attrDiv.className = 'attribute';
+
+                const guessValue = guessedModel[attr.key];
+                const targetValue = todayModel[attr.key];
+                const isMatch = guessValue === targetValue;
+
+                const indicator = document.createElement('div');
+                indicator.className = 'attribute-indicator ' + (isMatch ? 'match' : 'no-match');
+                indicator.textContent = isMatch ? '✓' : '✗';
+
+                const label = document.createElement('span');
+                label.className = 'attribute-label';
+                label.textContent = attr.label + ':';
+
+                const value = document.createElement('span');
+                value.className = 'attribute-value';
+                value.textContent = guessValue;
+
+                attrDiv.appendChild(indicator);
+                attrDiv.appendChild(label);
+                attrDiv.appendChild(value);
+                attrRow.appendChild(attrDiv);
+            });
+
+            div.appendChild(attrRow);
+            return div;
+        }
+
+        // Search and autocomplete
+        document.getElementById('modelSearch').addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            const suggestionsDiv = document.getElementById('suggestions');
+
+            if (query.length === 0) {
+                suggestionsDiv.classList.remove('show');
+                return;
+            }
+
+            const filtered = models.filter(m => 
+                m.ModelName.toLowerCase().includes(query) ||
+                m.ShortName.toLowerCase().includes(query)
+            ).slice(0, 8);
+
+            if (filtered.length === 0) {
+                suggestionsDiv.classList.remove('show');
+                return;
+            }
+
+            suggestionsDiv.innerHTML = filtered.map(m => 
+                `<div class="suggestion-item" data-model="${m.ModelName}">${m.ModelName}</div>`
+            ).join('');
+
+            suggestionsDiv.classList.add('show');
+
+            document.querySelectorAll('.suggestion-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    selectModel(this.dataset.model);
+                });
+            });
+        });
+
+        function selectModel(modelName) {
+            const model = models.find(m => m.ModelName === modelName);
+            if (model && !guesses.find(g => g.ModelName === modelName)) {
+                guesses.push(model);
+                if (model.ModelName === todayModel.ModelName) {
+                    hasWon = true;
+                }
+                saveGame();
+                updateUI();
+                document.getElementById('modelSearch').value = '';
+                document.getElementById('suggestions').classList.remove('show');
+            }
+        }
+
+        function saveGame() {
+            const gameState = {
+                guesses: guesses.map(g => g.ModelName),
+                hasWon: hasWon,
+                date: new Date().toDateString()
+            };
+            localStorage.setItem('modeldle-game', JSON.stringify(gameState));
+        }
+
+        function loadSavedGame() {
+            const saved = localStorage.getItem('modeldle-game');
+            if (saved) {
+                const gameState = JSON.parse(saved);
+                const today = new Date().toDateString();
+                
+                if (gameState.date === today) {
+                    guesses = gameState.guesses.map(name => 
+                        models.find(m => m.ModelName === name)
+                    ).filter(m => m);
+                    hasWon = gameState.hasWon;
+                    updateUI();
+                } else {
+                    // New day, reset
+                    resetGame();
+                }
+            }
+        }
+
+        function resetGame() {
+            guesses = [];
+            hasWon = false;
+            saveGame();
+            updateUI();
+            document.getElementById('modelSearch').value = '';
+            document.getElementById('winMessage').innerHTML = '';
+        }
+
+        document.getElementById('resetButton').addEventListener('click', resetGame);
+
+        // Load models on page load
+        loadModels();
+
+        // Close suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target.id !== 'modelSearch') {
+                document.getElementById('suggestions').classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>
