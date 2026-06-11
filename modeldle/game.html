@@ -406,7 +406,7 @@
 
             <div class="info-text">
                 🎯 Guess a model and see how many attributes match the daily target!
-                Red means wrong, yellow means partially right or close, and green means a perfect match. For date attributes, arrows indicate if the target is older (↓) or newer (↑) than your guess.
+                Red means wrong, yellow means partially right, and green means a perfect match. For date attributes, arrows indicate if the target is older (↓) or newer (↑) than your guess.
             </div>
             <div class="guess-row header-row">
                 <div class="guess-tile guess-model">Model</div>
@@ -479,7 +479,7 @@
                 // Select today's model using date-based seeding
                 const seed = getDailySeed();
                 const randomIndex = Math.floor(seededRandom(seed) * models.length);
-                todayModel = models[39];
+                todayModel = models[randomIndex];
 
                 updateUI();
                 loadSavedGame();
