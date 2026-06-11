@@ -675,16 +675,29 @@
                     else if (result === 'partial-match') row += '🟨';
                     else row += '🟥';
                 }
-                else if (attr.key === 'DateIntroduced') {
-                    const result = compareDate(
-                        guessValue,
-                        targetValue
-                    );
 
-                    if (result.className === 'match') row += '🟩';
-                    else if (result.className === 'partial-match') row += '🟨';
-                    else row += '🟥';
+                else if (attr.key === 'DateIntroduced') {
+
+                    const guessDate = parseDate(guessValue);
+                    const targetDate = parseDate(targetValue);
+
+                    if (!guessDate || !targetDate) {
+                        row += '🟥';
+                    }
+                    else if (
+                        guessDate.getFullYear() ===
+                        targetDate.getFullYear()
+                    ) {
+                        row += '🟩';
+                    }
+                    else if (guessDate < targetDate) {
+                        row += '⬆️';
+                    }
+                    else {
+                        row += '⬇️';
+                    }
                 }
+
                 else {
                     row +=
                         guessValue === targetValue
