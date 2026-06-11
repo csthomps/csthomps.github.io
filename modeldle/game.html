@@ -661,53 +661,51 @@
             
             return null;
         }
+        function getGuessEmojiRow(guess) {
+            let row = '';
 
-        function generateShareText() {
-            const today = new Date();
-            const dateStr = today.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            
-            let text = `🤖 Modeldle - ${dateStr}\n`;
-            text += `${guesses.length} Guess${guesses.length !== 1 ? 'es' : ''}\n`;
-            text += hasWon ? '✨ Solved!\n' : 'In Progress...\n';
-            text += '\n';
+            GAME_ATTRIBUTES.forEach(attr => {
+                const guessValue = guess[attr.key];
+                const targetValue = todayModel[attr.key];
 
-            guesses.forEach(guess => {
-                const isCorrect = guess.ModelName === todayModel.ModelName;
+                if (attr.key === 'Tasks') {
+                    const result = compareTasks(guessValue, targetValue);
 
-                let indicators = [];
-                GAME_ATTRIBUTES.forEach(attr => {
-                    const guessValue = guess[attr.key];
-                    const targetValue = todayModel[attr.key];
-                    const isMatch = guessValue === targetValue;
-                    const isDateAttr = attr.key === 'DateIntroduced';
+                    if (result === 'match') row += '🟩';
+                    else if (result === 'partial-match') row += '🟨';
+                    else row += '🟥';
+                }
+                else if (attr.key === 'DateIntroduced') {
+                    const result = compareDate(
+                        guessValue,
+                        targetValue
+                    );
 
-                    let indicator = '';
-                    if (isDateAttr && !isMatch) {
-                        const guessDate = parseDate(guessValue);
-                        const targetDate = parseDate(targetValue);
-                        if (guessDate && targetDate) {
-                            if (guessDate < targetDate) {
-                                indicator = '↑'; // Target is more recent
-                            } else if (guessDate > targetDate) {
-                                indicator = '↓'; // Target is older
-                            } else {
-                                indicator = '✓';
-                            }
-                        } else {
-                            indicator = '✗';
-                        }
-                    } else {
-                        indicator = isMatch ? '✓' : '✗';
-                    }
-
-                    indicators.push(indicator);
-                });
-
-                text += `  ${indicators.join(' ')}\n`;
-                text += '\n';
+                    if (result.className === 'match') row += '🟩';
+                    else if (result.className === 'partial-match') row += '🟨';
+                    else row += '🟥';
+                }
+                else {
+                    row +=
+                        guessValue === targetValue
+                            ? '🟩'
+                            : '🟥';
+                }
             });
 
-            text += '🔗 Play at: csthomps.github.io/modeldle/game.html';
+            return row;
+        }
+        function generateShareText() {
+            let text = `🤖 Modeldle\n`;
+            text += `${hasWon ? guesses.length : 'X'}/${guesses.length}\n\n`;
+
+            guesses.forEach(guess => {
+                text += getGuessEmojiRow(guess) + '\n';
+            });
+
+            text += '\n';
+            text += 'https://csthomps.github.io/modeldle/';
+
             return text;
         }
 
@@ -961,3 +959,4 @@
     </script>
 </body>
 </html>
+
